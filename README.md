@@ -1,4 +1,4 @@
-# MARTIAL - A Battle Line Game Engine
+# pybattleline - A Battle Line Game Engine in Python
 
 ## What is this?
 
