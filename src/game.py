@@ -96,7 +96,7 @@ class TroopsDeck(Deck[TroopCard]):
 class TacticsDeck(Deck[TacticCard]):
     @staticmethod
     def new() -> "TacticsDeck":
-        return TacticsDeck(CardGenerator.troops())
+        return TacticsDeck(CardGenerator.tactics())
 
     @staticmethod
     def shuffled() -> "TacticsDeck":
@@ -109,6 +109,14 @@ class TacticsDeck(Deck[TacticCard]):
 
     def __deepcopy__(self, _memo) -> "TacticsDeck":
         return TacticsDeck(self._cards)
+
+
+class Grave:
+    """Represent pair of discarded card and bound tactics card."""
+
+
+class Graveyard:
+    pass
 
 
 class GameState:
