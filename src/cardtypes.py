@@ -137,4 +137,3 @@ class TacticGuiles(IntEnum, metaclass=_TacticsEnumMeta):
     REDEPLOY = Tactics.REDEPLOY
     DESERTER = Tactics.DESERTER
     TRAITOR = Tactics.TRAITOR
-

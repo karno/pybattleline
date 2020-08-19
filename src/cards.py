@@ -1,7 +1,9 @@
 """Battle Line Card Definitions."""
 
-from abc import ABCMeta
 import itertools
+from abc import ABCMeta
+from typing import Iterable, Union
+
 from src.cardtypes import (
     CardType,
     PlayedCardType,
@@ -12,7 +14,6 @@ from src.cardtypes import (
     TroopColors,
     Troops,
 )
-from typing import Iterable, Union
 
 
 class Card(metaclass=ABCMeta):
@@ -40,11 +41,14 @@ class TroopCard(Card, TroopAndTacticMoraleCard):
     def get_card_type(self) -> CardType:
         return CardType.TROOP
 
-    def get_troops(self) -> Troops:
+    def get_troop(self) -> Troops:
         return self._number
 
     def get_color(self) -> TroopColors:
         return self._color
+
+    def __repr__(self) -> str:
+        return f"[{self._color.name[0]}{int(self._number):02}]"
 
 
 class TacticCard(Card, metaclass=ABCMeta):
@@ -57,10 +61,25 @@ class TacticCard(Card, metaclass=ABCMeta):
     def get_tactics(self) -> Tactics:
         return self._value
 
+    def __repr__(self) -> str:
+        tactics_table = {
+            Tactics.LEADER_ALEXANDER: "MLA",
+            Tactics.LEADER_DARIUS: "MLD",
+            Tactics.COMPANION_CAVALRY: "MCC",
+            Tactics.SHIELD_BEARERS: "MSB",
+            Tactics.FOG: "EFG",
+            Tactics.MUD: "EMD",
+            Tactics.SCOUT: "GSC",
+            Tactics.REDEPLOY: "GRD",
+            Tactics.DESERTER: "GDS",
+            Tactics.TRAITOR: "GTR",
+        }
+        return f"<{tactics_table[self._value]}>"
+
 
 class TacticMoraleCard(TacticCard, TroopAndTacticMoraleCard):
     def __init__(self, value: Union[TacticMorales, Tactics, int]) -> None:
-        TacticCard.__init__(self, value)
+        TacticCard.__init__(self, Tactics(int(value)))
         assert (
             self.get_tactics() in TacticMorales
         ), "value {} must be one of Leader (Alexander, Darius), Cavalry, or Shield.".format(
@@ -73,10 +92,10 @@ class TacticMoraleCard(TacticCard, TroopAndTacticMoraleCard):
 
 class TacticEnvironmentCard(TacticCard, PlayedCard):
     def __init__(self, value: Union[TacticEnvironments, Tactics, int]) -> None:
-        TacticCard.__init__(self, value)
+        TacticCard.__init__(self, Tactics(int(value)))
         assert (
             self.get_tactics() in TacticEnvironments
-        ), "value must be one of Leader (Alexander, Darius), Cavalry, or Shield."
+        ), "value must be one of Fog or Mud."
 
     def get_played_type(self) -> PlayedCardType:
         return PlayedCardType.ENVIRONMENT_TACTICS
@@ -84,13 +103,13 @@ class TacticEnvironmentCard(TacticCard, PlayedCard):
 
 class TacticGuileCard(TacticCard, PlayedCard):
     def __init__(self, value: Union[TacticGuiles, Tactics, int]) -> None:
-        TacticCard.__init__(self, value)
+        TacticCard.__init__(self, Tactics(int(value)))
         assert (
             self.get_tactics() in TacticGuiles
-        ), "value must be one of Leader (Alexander, Darius), Cavalry, or Shield."
+        ), "value must be one of Scout, Redeploy, Deserter, or Traitor."
 
     def get_played_type(self) -> PlayedCardType:
-        return PlayedCardType.ENVIRONMENT_TACTICS
+        return PlayedCardType.GUILE_TACTICS
 
 
 class CardGenerator:
