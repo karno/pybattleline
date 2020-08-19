@@ -73,11 +73,11 @@ class _TacticsEnumMeta(EnumMeta):
             other, (int, Tactics, TacticMorales, TacticEnvironments, TacticGuiles)
         ):
             try:
-                self(int(other))
+                self(int(other))  # pylint: disable=no-value-for-parameter
                 return True
             except ValueError:
                 return False
-        super().__contains__(other)
+        return super().__contains__(other)
 
 
 class Tactics(IntEnum, metaclass=_TacticsEnumMeta):
