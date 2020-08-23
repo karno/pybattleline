@@ -94,12 +94,13 @@ class Tactics(IntEnum, metaclass=_TacticsEnumMeta):
     Scout: You can draw a total three cards from one or both decks.
         After that, you choose two cards from your hand and return 
         them on the top of corresponding decks.
-    Redeploy: You can choose one of any troop or tactics card deployed in your side next to
-        unclaimed flag, then replace it into your another slot or discard it from the game.
-    Deserter: You can choose one of any troop or tactics card deployed in opposite side next to
-        unclaimed flag, then discard it from the game.
-    Traitor: You can choose one of any troop or tactics card deployed in opposite side next to
-        unclaimed flag, then replace it into your slot.
+    Redeploy: You can choose one of any troop or morale tactics card deployed in your 
+        side next to unclaimed flag, then replace it into your another slot or discard 
+        it from the game.
+    Deserter: You can choose one of any troop or tactics card deployed in opposite side 
+        next to unclaimed flag, then discard it from the game.
+    Traitor: You can choose one of any troop or tactics card deployed in opposite side 
+        next to unclaimed flag, then replace it into your slot.
     """
 
     LEADER_ALEXANDER = auto()
