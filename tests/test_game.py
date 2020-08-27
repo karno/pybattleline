@@ -1,6 +1,6 @@
 # noqa
 
-from src.cardtypes import TacticEnvironments, TacticMorales, Tactics, TroopColors
+from src.cardtypes import TacticMorales, Tactics, TroopColors
 from src.cards import CardGenerator
 from src.game import Flag, PLAYER_A, PLAYER_B
 from src import game
@@ -24,12 +24,22 @@ def test_flag_stack_tacticmorales():  # noqa
     )
 
 
-def test_flag_env():  # noqa
+def test_flag_env_mud():  # noqa
     flag = Flag()
+    assert flag.get_required_card_num() == 3
     c_mud = CardGenerator.tactic(Tactics.MUD)
     flag.add_env(PLAYER_A, c_mud)
     assert len(flag.get_stacked_envs(PLAYER_A)) == 1
-    assert flag.remove_env(PLAYER_A, TacticEnvironments.MUD) == c_mud
+    assert flag.get_required_card_num() == 4
+
+
+def test_flag_env_fog():  # noqa
+    flag = Flag()
+    assert not flag.is_formation_disabled()
+    c_fog = CardGenerator.tactic(Tactics.FOG)
+    flag.add_env(PLAYER_B, c_fog)
+    assert len(flag.get_stacked_envs(PLAYER_B)) == 1
+    assert flag.is_formation_disabled()
 
 
 def test_troops_deck_len():  # noqa
@@ -46,4 +56,3 @@ def test_flag_deepcopy():  # noqa
     flag.add_stack(PLAYER_A, c_r3)
     c_ld = CardGenerator.tactic(Tactics.LEADER_DARIUS)
     flag.add_stack(PLAYER_B, c_ld)
-

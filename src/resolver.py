@@ -4,191 +4,24 @@ import itertools
 from itertools import chain
 from typing import Collection, Iterable, List, Optional, Tuple
 from src.cards import (
-    TacticEnvironmentCard,
     TacticMoraleCard,
     TroopAndTacticMoraleCard,
     TroopCard,
 )
-from src.cardtypes import Formations, TacticMorales, Tactics, TroopColors
+from src.cardtypes import TacticMorales, TroopColors
 from src.game import Flag, GameState, PLAYER_A, PLAYER_B, PLAYER_UNRESOLVED
 
 
-def check_resolve(flag: Flag, state: GameState) -> int:
-    # check flag is not resolved yet
-    if flag.is_resolved():
-        return flag.get_resolved()
-    # to resolve a flag acquisition, at least 1 user must be placed
-    # 3 troop cards into his position.
-    # (if there is Mud card, 4 troop cards are required.)
-    envs: Iterable[TacticEnvironmentCard] = itertools.chain.from_iterable(
-        [flag.get_stacked_envs(p) for p in range(2)]
-    )
-    mudness = Tactics.MUD in list([e.get_tactics() for e in envs])
-    required_card_num = 4 if mudness else 3
-    fullfilled = [False, False]
-    for player in range(2):
-        if len(flag.get_stacked_cards(player)) >= required_card_num:
-            fullfilled[player] = True
-    if not any(fullfilled):
-        # anyone not satisfied
-        return PLAYER_UNRESOLVED
-    if all(fullfilled):
-        comp = _compare_formations(
-            flag.get_stacked_cards(PLAYER_A), flag.get_stacked_cards(PLAYER_B)
-        )
-        if comp != PLAYER_UNRESOLVED:
-            return comp
-        return PLAYER_A if flag.get_last_stacked_player() == PLAYER_B else PLAYER_B
-    return PLAYER_A
-
-
-def _compare_formations(
-    stack_a: Collection[TroopAndTacticMoraleCard],
-    stack_b: Collection[TroopAndTacticMoraleCard],
-) -> int:
-    assert len(stack_a) == len(stack_b)
-    return PLAYER_UNRESOLVED
-
-
-def _eligible_for_wedge(stack: Collection[TroopAndTacticMoraleCard]) -> bool:
-    return _has_same_colors(stack)[0] and _has_consecutive_values(stack)
-
-
-def _eligible_for_phalanx(stack: Collection[TroopAndTacticMoraleCard]) -> bool:
-    return _has_same_values(stack)[0]
-
-
-def _eligible_for_battallion(stack: Collection[TroopAndTacticMoraleCard]) -> bool:
-    return _has_same_colors(stack)[0]
-
-
-def _eligible_for_skirmish(stack: Collection[TroopAndTacticMoraleCard]) -> bool:
-    return _has_consecutive_values(stack)
-
-
-def _eligible_for_host(stack: Collection[TroopAndTacticMoraleCard]) -> bool:
-    return True
-
-
-def _has_same_colors(
-    stack: Collection[TroopAndTacticMoraleCard],
-) -> Tuple[bool, Optional[TroopColors]]:
-    card_color: Optional[TroopColors] = None
-
-    # check troop cards
-    for c in stack:
-        if isinstance(c, TacticMoraleCard):
-            # when coming the tactic morales, just skip it
-            # (because it is a wildcard)
-            pass
-        elif isinstance(c, TroopCard):
-            if card_color and card_color != c.get_color():
-                # color not matched
-                return False, None
-            card_color = c.get_color()
-        else:
-            raise ValueError("Invalid card: {}".format(repr(c)))
-
-    # tactic cards have a wild color
-    return True, card_color
-
-
-def _has_same_values(
-    stack: Collection[TroopAndTacticMoraleCard],
-) -> Tuple[bool, Optional[int]]:
-    card_number: Optional[int] = None
-    tacticmorales: List[TacticMoraleCard] = []
-
-    # check troop cards
-    for c in stack:
-        if isinstance(c, TacticMoraleCard):
-            # check later
-            tacticmorales.append(c)
-        elif isinstance(c, TroopCard):
-            number = int(c.get_troop())
-            if card_number and card_number != number:
-                # number not matched
-                return False, None
-            card_number = number
-        else:
-            raise ValueError("Invalid card: {}".format(repr(c)))
-
-    # check tactic cards
-    tactic_types = list([t.get_tactics() for t in tacticmorales])
-    # check wild 8
-    if TacticMorales.COMPANION_CAVALRY in tactic_types:
-        # must be 8
-        if card_number and card_number != 8:
-            return False, None
-        card_number = 8
-    if TacticMorales.SHIELD_BEARERS in tactic_types:
-        if card_number and card_number >= 4:
-            return False, None
-
-    # leader cards can be accepted by any number
-    return True, card_number
-
-
-def _has_consecutive_values(
-    stack: Collection[TroopAndTacticMoraleCard], skippable: int = 0
-) -> bool:
-    # sorted stack
-    card_numbers: List[int] = []
-    tacticmorales: List[TacticMoraleCard] = []
-
-    # check troop cards
-    for c in stack:
-        if isinstance(c, TacticMoraleCard):
-            tacticmorales.append(c)
-        elif isinstance(c, TroopCard):
-            card_numbers.append(int(c.get_troop()))
-        else:
-            raise ValueError("Invalid card: {}".format(repr(c)))
-
-    # check tactic cards
-    tactic_types = list([t.get_tactics() for t in tacticmorales])
-    # check wild 8
-    if TacticMorales.COMPANION_CAVALRY in tactic_types:
-        card_numbers.append(8)
-    # wild 1-3
-    if TacticMorales.SHIELD_BEARERS in tactic_types:
-        for i in reversed(range(1, 4)):
-            if i not in card_numbers:
-                card_numbers.append(i)
-    # wildcard
-    if (
-        TacticMorales.LEADER_ALEXANDER in tactic_types
-        or TacticMorales.LEADER_DARIUS in tactic_types
-    ):
-        skippable += 1
-    return _check_consecutive(card_numbers, skippable)
-
-
-def _check_consecutive(items: List[int], skippables: int) -> bool:
-    items.sort()
-    last_num: Optional[int] = None
-    for elem in items:
-        if not last_num or (last_num + 1) == elem:
-            last_num = elem
-        else:
-            skippables -= 1
-            if skippables < 0:
-                return False
-            last_num += 1
-    return True
-
-
-def find_candidates(
-    flag: Flag, player: int, state: GameState
-) -> Iterable[Tuple[Formations, Collection[TroopCard]]]:
-    pass
-
-
-# --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---
-
-
 def resolve(state: GameState):
-    pass
+    used_cards = aggregate_used_troops(state)
+    for flag in state.get_flags():
+        if flag.is_resolved():
+            # already resolved
+            continue
+        resolve = check_resolvable_for_single_flag(flag, used_cards)
+        # resolve flag
+        if resolve != PLAYER_UNRESOLVED:
+            flag.resolve(resolve)
 
 
 def aggregate_used_troops(state: GameState) -> List[TroopCard]:
@@ -211,7 +44,37 @@ def aggregate_used_troops(state: GameState) -> List[TroopCard]:
 def check_resolvable_for_single_flag(
     flag: Flag, used_cards: Collection[TroopCard]
 ) -> int:
-    pass
+    n_cards = flag.get_required_card_num()
+    resolver_funcs = [
+        possible_maximum_strength_for_wedge,
+        possible_maximum_strength_for_phalanx,
+        possible_maximum_strength_for_battalion,
+        possible_maximum_strength_for_skirmish,
+        possible_maximum_strength_for_host,
+    ]
+    if flag.is_formation_disabled():
+        # all formation is disabled and only hosts available
+        resolver_funcs = [possible_maximum_strength_for_host]
+    for resolver in resolver_funcs:
+        a_cards = flag.get_stacked_cards(PLAYER_A)
+        b_cards = flag.get_stacked_cards(PLAYER_B)
+        a_strength, a_resolvable = resolver(a_cards, n_cards, used_cards)
+        b_strength, b_resolvable = resolver(b_cards, n_cards, used_cards)
+        if a_resolvable and b_resolvable and a_strength == b_strength:
+            # faster user wins
+            return PLAYER_A if flag.get_last_stacked_player() == PLAYER_B else PLAYER_B
+        if a_resolvable:
+            if a_strength > b_strength:
+                return PLAYER_A
+        if b_resolvable:
+            if b_strength > a_strength:
+                return PLAYER_B
+        if a_strength > 0 or b_strength > 0:
+            # could not be resolved yet
+            return PLAYER_UNRESOLVED
+        # could not build the formation, continue to weaker formation type...
+    # not resolved
+    return PLAYER_UNRESOLVED
 
 
 def possible_maximum_strength_for_wedge(
@@ -220,13 +83,11 @@ def possible_maximum_strength_for_wedge(
     used_cards: Collection[TroopCard],
 ) -> Tuple[int, bool]:
     """Cards have the same color and consecutive values."""
-    have_same_color, color = _has_same_colors(stacked_cards)
+    have_same_color, color = _check_same_color_in_stack(stacked_cards)
     if not have_same_color:  # have different colors
         return 0, False
-    strength, result, cand_tuples = _get_candidate_consecutive_tuples(
-        stacked_cards, n_cards
-    )
-    if strength:  # strength is fixed
+    strength, result, cand_tuples = _check_consecutive_formation(stacked_cards, n_cards)
+    if strength is not None:  # strength is fixed
         return strength, result
     for c in used_cards:
         if c.get_color() != color:
@@ -250,7 +111,7 @@ def possible_maximum_strength_for_phalanx(
     for c in stacked_cards:
         if isinstance(c, TroopCard):
             value = int(c.get_troop())
-            if number and number != value:
+            if number is not None and number != value:
                 return 0, False
             number = value
             continue
@@ -261,7 +122,7 @@ def possible_maximum_strength_for_phalanx(
                 continue
             if morale == TacticMorales.COMPANION_CAVALRY:
                 # anycolor of 8
-                if number and number != 8:
+                if number is not None and number != 8:
                     return 0, False
                 number = 8
                 continue
@@ -278,7 +139,7 @@ def possible_maximum_strength_for_phalanx(
     candidates = reversed(
         sorted(
             [number]
-            if number
+            if number is not None
             else list(range(1, 4))
             if is_shield
             else list(range(1, 11))
@@ -303,20 +164,24 @@ def possible_maximum_strength_for_battalion(
 ) -> Tuple[int, bool]:
     """Cards have the same color."""
     # check all cards have the same colors
-    have_same_color, color = _has_same_colors(stacked_cards)
+    have_same_color, color = _check_same_color_in_stack(stacked_cards)
     if not have_same_color:
         # not eligible for batalion
         return 0, False
     required = n_cards - len(stacked_cards)
-    cur_value = _calculate_current_maximum_power(stacked_cards)
+    cur_value = _calculate_strength_of_stack(stacked_cards)
     if required == 0:
         return cur_value, True
     colors = [color] if color is not None else list(TroopColors)
 
     strength_combination = [
-        _calculate_max_combination(required, c, used_cards) for c in colors
+        _calculate_maximum_available_strength(required, c, used_cards) or 0
+        for c in colors
     ]
-    return (max(strength_combination) + cur_value), False
+    max_str_com = max(strength_combination)
+    if max_str_com == 0:
+        return 0, False
+    return max_str_com + cur_value, False
 
 
 def possible_maximum_strength_for_skirmish(
@@ -325,10 +190,8 @@ def possible_maximum_strength_for_skirmish(
     used_cards: Collection[TroopCard],
 ) -> Tuple[int, bool]:
     """Cards have the consecutive values(with any colors)."""
-    strength, result, cand_tuples = _get_candidate_consecutive_tuples(
-        stacked_cards, n_cards
-    )
-    if strength:  # strength is fixed
+    strength, result, cand_tuples = _check_consecutive_formation(stacked_cards, n_cards)
+    if strength is not None:  # strength is fixed
         return strength, result
     # check volatiled numbers
     volatility = [6] * 10
@@ -354,13 +217,16 @@ def possible_maximum_strength_for_host(
 ) -> Tuple[int, bool]:
     """Cards are not any other formations."""
     required = n_cards - len(stacked_cards)
-    cur_value = _calculate_current_maximum_power(stacked_cards)
+    cur_value = _calculate_strength_of_stack(stacked_cards)
     if required == 0:
         return cur_value, True
-    return (_calculate_max_combination(required, None, used_cards) + cur_value), False
+    max_str_com = _calculate_maximum_available_strength(required, None, used_cards) or 0
+    if max_str_com == 0:
+        return 0, False
+    return max_str_com + cur_value, False
 
 
-def _get_candidate_consecutive_tuples(
+def _check_consecutive_formation(
     stacked_cards: Collection[TroopAndTacticMoraleCard], n_cards: int
 ) -> Tuple[Optional[int], bool, List[Tuple[int, List[int]]]]:
     """Check cards have the consecutive values.
@@ -400,11 +266,11 @@ def _filter_candidate_lists_by_card(
 ) -> List[Tuple[int, List[int]]]:
     result_list: List[Tuple[int, List[int]]] = []
     for cand_tuple in cand_tuples:
-        result_list.extend(_check_candidate_list_by_card(card, cand_tuple))
+        result_list.extend(_check_candidate_tuple_by_card(card, cand_tuple))
     return result_list
 
 
-def _check_candidate_list_by_card(
+def _check_candidate_tuple_by_card(
     card: TroopAndTacticMoraleCard, cand_tuple: Tuple[int, List[int]]
 ) -> List[Tuple[int, List[int]]]:
     if isinstance(card, TroopCard):
@@ -447,9 +313,10 @@ def _check_candidate_list_by_troop(
     return [cand_tuple]
 
 
-def _calculate_max_combination(
+def _calculate_maximum_available_strength(
     n_req_cards: int, color: Optional[TroopColors], used_cards: Collection[TroopCard]
-) -> int:
+) -> Optional[int]:
+    assert n_req_cards > 0
     cards = ([1] if color is not None else [6]) * 10  # 1~10
     for c in used_cards:
         if color is not None and c.get_color() != color:
@@ -457,17 +324,18 @@ def _calculate_max_combination(
         cards[int(c.get_troop()) - 1] -= 1
     value = 0
     for i in reversed(range(10)):
-        if cards[i] > 0:
+        while cards[i] > 0 and n_req_cards > 0:
             value += i + 1
+            cards[i] -= 1
             n_req_cards -= 1
         if n_req_cards == 0:
             return value
     # requirement not satisfied
     assert n_req_cards > 0
-    return 0
+    return None
 
 
-def _calculate_current_maximum_power(
+def _calculate_strength_of_stack(
     stacked_cards: Collection[TroopAndTacticMoraleCard],
 ) -> int:
     value = 0
@@ -489,6 +357,29 @@ def _calculate_current_maximum_power(
     return value
 
 
+def _check_same_color_in_stack(
+    stack: Collection[TroopAndTacticMoraleCard],
+) -> Tuple[bool, Optional[TroopColors]]:
+    card_color: Optional[TroopColors] = None
+
+    # check troop cards
+    for c in stack:
+        if isinstance(c, TacticMoraleCard):
+            # when coming the tactic morales, just skip it
+            # (because it is a wildcard)
+            pass
+        elif isinstance(c, TroopCard):
+            if card_color and card_color != c.get_color():
+                # color not matched
+                return False, None
+            card_color = c.get_color()
+        else:
+            raise ValueError("Invalid card: {}".format(repr(c)))
+
+    # tactic cards have a wild color
+    return True, card_color
+
+
 def _iterate_consecutive_candidates_number(n_cards: int) -> Iterable[List[int]]:
-    for i in reversed(range(1, 11 - n_cards)):
-        yield list(range(i, n_cards))
+    for i in reversed(range(1, 12 - n_cards)):
+        yield list(range(i, i + n_cards))

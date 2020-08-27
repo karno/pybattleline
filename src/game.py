@@ -50,8 +50,8 @@ class Flag:
         for flag in flags:
             flag_lines = repr(flag).split("\n")
             for i, line in enumerate(flag_lines):
-                if len(lines) < i:
-                    lines[i] = line
+                if len(lines) <= i:
+                    lines.append(line)
                 else:
                     lines[i] += line
         return "\n".join(lines)
@@ -134,11 +134,17 @@ class Flag:
         assert self._flag_position == PLAYER_UNRESOLVED, "the flag is already resolved!"
         self._flag_position = player
 
-    def required_card_num(self) -> int:
+    def get_required_card_num(self) -> int:
         stacked_envs = [
             e.get_tactic_envs() for e in itertools.chain.from_iterable(self.envs)
         ]
         return 4 if TacticEnvironments.MUD in stacked_envs else 3
+
+    def is_formation_disabled(self) -> bool:
+        stacked_envs = [
+            e.get_tactic_envs() for e in itertools.chain.from_iterable(self.envs)
+        ]
+        return TacticEnvironments.FOG in stacked_envs
 
     def __repr__(self) -> str:
         side_a_cards = [""] * 3
@@ -316,7 +322,7 @@ class GameState:
         for op in reversed(self._operations[PLAYER_B]):
             text += repr(op)
         # flags
-        Flag.repr_flags(self._flags)
+        text += Flag.repr_flags(self._flags)
         # player a operations
         for op in self._operations[PLAYER_A]:
             text += repr(op)
