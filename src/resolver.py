@@ -12,7 +12,7 @@ from src.cardtypes import TacticMorales, TroopColors
 from src.game import Flag, GameState, PLAYER_A, PLAYER_B, PLAYER_UNRESOLVED
 
 
-def resolve(state: GameState):
+def resolve(state: GameState) -> None:
     used_cards = aggregate_used_troops(state)
     for flag in state.get_flags():
         if flag.is_resolved():
