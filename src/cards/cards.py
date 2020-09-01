@@ -4,7 +4,7 @@ import itertools
 from abc import ABCMeta
 from typing import Iterable, Union
 
-from src.cardtypes import (
+from src.cards.cardtypes import (
     CardType,
     PlayedCardType,
     TacticEnvironments,

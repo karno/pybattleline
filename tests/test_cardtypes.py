@@ -1,5 +1,7 @@
 # noqa
-from src.cardtypes import TacticEnvironments, TacticGuiles, TacticMorales, Tactics
+
+
+from src.cards.cardtypes import TacticEnvironments, TacticGuiles, TacticMorales, Tactics
 
 
 def test_card_definition_tactics():  # noqa

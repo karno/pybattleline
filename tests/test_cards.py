@@ -1,5 +1,7 @@
 # noqa
-from src.cards import (
+
+
+from src.cards.cards import (
     CardGenerator,
     TacticCard,
     TacticEnvironmentCard,
@@ -7,7 +9,7 @@ from src.cards import (
     TacticMoraleCard,
     TroopCard,
 )
-from src.cardtypes import (
+from src.cards.cardtypes import (
     CardType,
     PlayedCardType,
     TacticEnvironments,

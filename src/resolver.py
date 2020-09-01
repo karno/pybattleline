@@ -3,13 +3,12 @@
 import itertools
 from itertools import chain
 from typing import Collection, Iterable, List, Optional, Tuple
-from src.cards import (
-    TacticMoraleCard,
-    TroopAndTacticMoraleCard,
-    TroopCard,
-)
-from src.cardtypes import TacticMorales, TroopColors
-from src.game import Flag, GameState, PLAYER_A, PLAYER_B, PLAYER_UNRESOLVED
+
+from src.cards.cards import TacticMoraleCard, TroopAndTacticMoraleCard, TroopCard
+from src.cards.cardtypes import TacticMorales, TroopColors
+from src.consts import PLAYER_A, PLAYER_B, PLAYER_UNRESOLVED
+from src.flag import Flag
+from src.gamestate import GameState
 
 
 def resolve(state: GameState) -> None:

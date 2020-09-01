@@ -1,6 +1,9 @@
 # noqa
-from src.cardtypes import TacticMorales, TroopColors
-from src.cards import CardGenerator, TroopCard
+from src.cards.cards import CardGenerator, TroopCard
+from src.cards.cardtypes import TacticMorales, TroopColors
+from src.consts import PLAYER_A, PLAYER_B, PLAYER_UNRESOLVED
+from src.flag import Flag
+from src.gamestate import GameState
 from src.resolver import (
     aggregate_used_troops,
     check_resolvable_for_single_flag,
@@ -10,7 +13,6 @@ from src.resolver import (
     possible_maximum_strength_for_skirmish,
     possible_maximum_strength_for_wedge,
 )
-from src.game import Flag, GameState, PLAYER_A, PLAYER_B, PLAYER_UNRESOLVED
 
 
 def test_resolve_unresolvable():  # noqa: D103

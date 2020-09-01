@@ -1,9 +1,11 @@
 # noqa
 
-from src.cardtypes import TacticMorales, Tactics, TroopColors
-from src.cards import CardGenerator
-from src.game import Flag, PLAYER_A, PLAYER_B
-from src import game
+
+from src.cards.cards import CardGenerator
+from src.cards.cardtypes import TacticMorales, Tactics, TroopColors
+from src.cards.decks import TacticsDeck, TroopsDeck
+from src.consts import PLAYER_A, PLAYER_B
+from src.flag import Flag
 
 
 def test_flag_stack_troop():  # noqa
@@ -43,11 +45,11 @@ def test_flag_env_fog():  # noqa
 
 
 def test_troops_deck_len():  # noqa
-    assert len(game.TroopsDeck.new()) == 60
+    assert len(TroopsDeck.new()) == 60
 
 
 def test_tactics_deck_len():  # noqa
-    assert len(game.TacticsDeck.new()) == 10
+    assert len(TacticsDeck.new()) == 10
 
 
 def test_flag_deepcopy():  # noqa
