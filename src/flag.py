@@ -19,19 +19,19 @@ from src.cards.cardtypes import (
 from src.consts import PLAYER_A, PLAYER_B, PLAYER_UNRESOLVED
 
 _FLAG_REPRESENTATION_FORMAT = """
- {9}
- {8}
---- {12} ---
- {7}
- {6}
- {5}
---- {10} ---
- {0}
- {1}
- {2}
---- {11} ---
- {3}
- {4}
+ {9:^7} 
+ {8:^7} 
+--- {12:1} ---
+ {7:^7} 
+ {6:^7} 
+ {5:^7} 
+--- {10:1} ---
+ {0:^7} 
+ {1:^7} 
+ {2:^7} 
+--- {11:1} ---
+ {3:^7} 
+ {4:^7} 
 """
 
 
@@ -91,6 +91,15 @@ class Flag:
         self.stacks[player].append(card)
         self.stacks[player].sort()
         self._last_stacked_player = player
+
+    def remove_stack(
+        self, player: int, card: TroopAndTacticMoraleCard
+    ) -> Optional[TroopAndTacticMoraleCard]:
+        if isinstance(card, TroopCard):
+            return self.remove_stack_troops(player, card.get_color(), card.get_troop())
+        if isinstance(card, TacticMoraleCard):
+            self.remove_stack_tacticmorales(player, card.get_tactics())
+        raise ValueError(f"unknown card: {repr(card)}")
 
     def remove_stack_troops(
         self, player: int, color: Union[int, TroopColors], number: Union[int, Troops]

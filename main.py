@@ -2,39 +2,24 @@
 # -*- coding: utf-8 -*-
 
 import argparse
-from typing import Callable, Dict, Iterable, List, Tuple
+from typing import Callable, Dict, List, Tuple
 
-from src.cards.cards import Card
-from src.consts import PLAYER_UNRESOLVED
+from src.consts import PLAYER_A, PLAYER_B, PLAYER_UNRESOLVED
 from src.gamestate import GameState
+from src.players.humanplayer import HumanPlayer
 from src.players.player import Player
 from src.resolver import resolve
 
 
 class Game:
-    @staticmethod
-    def new(
-        state: GameState,
-        player_factories: Tuple[
-            Callable[[int, Iterable[Card]], Player],
-            Callable[[int, Iterable[Card]], Player],
-        ],
-        shuffle_deck: bool = True,
-    ) -> "Game":
-        if shuffle_deck:
-            state.get_tactics_deck().shuffle()
-            state.get_troops_deck().shuffle()
-        players = [
-            factory(i, [state.get_troops_deck().draw() for _ in range(7)])
-            for i, factory in enumerate(player_factories)
-        ]
-        return Game(state, tuple(players))  # type: ignore
-
     def __init__(self, state: GameState, players: Tuple[Player, Player]) -> None:
         self._winner = PLAYER_UNRESOLVED
         self._turn_length = 0
         self._state = state
         self._players = players
+
+    def get_state(self) -> GameState:
+        return self._state
 
     def get_turn_length(self) -> int:
         return self._turn_length
@@ -48,6 +33,7 @@ class Game:
         self._turn_length += 1
         for p in self._players:
             # player action
+            print(repr(self._state))
             self._state = p.play(self._state)
             # resolve flag state
             resolve(self._state)
@@ -67,7 +53,11 @@ def vscpu_main(arg: List[str]) -> None:
 
 
 def vshuman_main(arg: List[str]) -> None:
-    pass
+    game = Game(GameState.new(), (HumanPlayer(PLAYER_A), HumanPlayer(PLAYER_B)))
+    while game.run() == PLAYER_UNRESOLVED:
+        pass
+    print(f"Player {game.run() + 1} win!")
+    print(repr(game.get_state()))
 
 
 def train_main(arg: List[str]) -> None:

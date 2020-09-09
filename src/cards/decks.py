@@ -27,6 +27,10 @@ class Deck(Generic[TDeckCard]):
     def back(self, card: TDeckCard) -> None:
         self._cards.append(card)
 
+    def peek(self, num: int) -> Iterable[TDeckCard]:
+        for i in range(num):
+            yield self._cards[-(1 + i)]
+
     def __deepcopy__(self, _memo) -> "Deck[TDeckCard]":
         return Deck(self._cards[:])
 

@@ -74,9 +74,9 @@ class TroopCard(Card, TroopAndTacticMoraleCard):
             return True
         if not isinstance(other, TroopCard):
             return NotImplemented
-        return (
-            self.get_color() < other.get_color() or self.get_troop() < other.get_troop()
-        )
+        if self.get_troop() == other.get_troop():
+            return self.get_color() < other.get_color()
+        return self.get_troop() < other.get_troop()
 
     def __le__(self, other: object) -> bool:  # noqa: D105
         return self.__lt__(other) or self.__eq__(other)
